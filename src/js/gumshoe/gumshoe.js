@@ -26,9 +26,10 @@
 		nested: false,
 		nestedClass: 'active',
 
-		// Offset & reflow
+		// Offset & reflow & click
 		offset: 0,
 		reflow: false,
+		click: false,
 
 		// Event support
 		events: true
@@ -161,6 +162,8 @@
 	 * @return {Boolean} If true, page is at the bottom of the viewport
 	 */
 	var isAtBottom = function () {
+		console.log(window.innerHeight + window.pageYOffset);
+		console.log(getDocumentHeight());
 		if (window.innerHeight + window.pageYOffset >= getDocumentHeight()) return true;
 		return false;
 	};
@@ -375,6 +378,32 @@
 		};
 
 		/**
+		 * Get which content is clicked and to be activated.
+		 */
+		 publicAPIs.click = function (clicked) {
+			
+			// if there's no active content, deactivate and bail
+			if (!clicked) {
+				if (current) {
+					deactivate(current, settings);
+					current = null;
+				}
+				return;
+			}
+
+			// If the active content is the one currently active, do nothing
+			if (current && clicked.content === current.content) return;
+
+			// Deactivate the current content and activate the new content
+			deactivate(current, settings);
+			activate(clicked, settings);
+
+			// Update the currently active content
+			current = clicked;
+
+		};
+
+		/**
 		 * Detect the active content on scroll
 		 * Debounced for performance
 		 */
@@ -410,6 +439,44 @@
 		};
 
 		/**
+		 * Add scrollHandler on next scroll
+		 * Not debounced
+		 */
+		var attachScrollHandler = function (event) {
+			window.addEventListener('scroll', scrollHandler, false);
+			window.removeEventListener('scroll', attachScrollHandler, false);
+		}
+
+		/**
+		 * Activate content clicked, and deactivate current
+		 * Not debounced
+		 */
+		 var clickHandler = function (event) {
+			var nav = event.path[0];
+
+			// If nav is invalid element
+			if (!nav || !nav.hash) return;
+
+			// If there's a timer, cancel it
+			if (timeout) {
+				window.cancelAnimationFrame(timeout);
+			}
+
+			sortContents(contents);
+
+			// Block scrollHandler
+			window.removeEventListener('scroll', scrollHandler, false);
+			publicAPIs.click({ nav: nav,
+				content: document.getElementById(decodeURIComponent(nav.hash.substr(1)))
+			});
+
+			// Reattach scrollHandler on next scroll-up
+			attachScrollHandler.prevScrollY = window.scrollY
+			window.addEventListener('scroll', attachScrollHandler, false);
+
+		};
+
+		/**
 		 * Destroy the current instantiation
 		 */
 		publicAPIs.destroy = function () {
@@ -423,6 +490,9 @@
 			window.removeEventListener('scroll', scrollHandler, false);
 			if (settings.reflow) {
 				window.removeEventListener('resize', resizeHandler, false);
+			}
+			if (settings.click) {
+				window.removeEventListener('click', clickHandler, false);
 			}
 
 			// Reset variables
@@ -452,6 +522,9 @@
 			window.addEventListener('scroll', scrollHandler, false);
 			if (settings.reflow) {
 				window.addEventListener('resize', resizeHandler, false);
+			}
+			if (settings.click) {
+				window.addEventListener('click', clickHandler, false);
 			}
 
 		};
