@@ -162,8 +162,6 @@
 	 * @return {Boolean} If true, page is at the bottom of the viewport
 	 */
 	var isAtBottom = function () {
-		console.log(window.innerHeight + window.pageYOffset);
-		console.log(getDocumentHeight());
 		if (window.innerHeight + window.pageYOffset >= getDocumentHeight()) return true;
 		return false;
 	};
