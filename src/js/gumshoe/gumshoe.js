@@ -469,7 +469,6 @@
 			});
 
 			// Reattach scrollHandler on next scroll-up
-			attachScrollHandler.prevScrollY = window.scrollY
 			window.addEventListener('scroll', attachScrollHandler, false);
 
 		};
